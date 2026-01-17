@@ -39,20 +39,19 @@ telegram-bot-bridge/
 ├── bot/
 │   ├── main.py              # Bot entrypoint
 │   ├── handlers.py          # Commands & callbacks
-│   └── config.py            # Env config
+│   ├── config.py            # Environment configuration
 │
 ├── telethon_client/
 │   ├── client.py            # Telethon user client
-│   └── parser.py            # Parses external bot responses
+│   ├── parser.py            # External bot response parser
 │
 ├── storage/
-│   └── downloads/           # Downloaded files
+│   └── downloads/           # Downloaded audio files
 │
-├── requirements.txt
-├── .env.example
-├── Dockerfile
-└── README.md
-
+├── requirements.txt         # Python dependencies
+├── .env.example             # Environment variables template
+├── Dockerfile               # Docker build file
+└── README.md                # Project documentation
 
 
 
