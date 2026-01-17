@@ -1,5 +1,5 @@
 from aiogram import types, Router
-from parser import query_external_bot, download_audio_from_selection
+from .parser import query_external_bot, download_audio_from_selection
 from bot.config import DOWNLOAD_PATH
 
 router = Router()
