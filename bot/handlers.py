@@ -1,8 +1,8 @@
-from aiogram import types
-from aiogram.filters import Command  # <-- use this instead of dispatcher.filters
-from telethon_client.parser import query_external_bot, download_audio
-from bot.main import router
+from aiogram import Router, types
+from aiogram.filters import Command
+from bot.parser import query_external_bot, download_audio
 
+router = Router()
 
 @router.message(Command("search"))
 async def handle_search(message: types.Message):
