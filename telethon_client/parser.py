@@ -3,25 +3,32 @@ from telethon_client.client import client
 from bot.config import EXTERNAL_BOT
 
 
-async def query_external_bot(song_name: str):
-    """Send song query to @fmusbot and collect audio options."""
-    # send the query to the external bot
+async def query_external_bot_first(song_name: str):
+    """Send song query to @fmusbot and return the first file (audio or document)."""
     await client.send_message(EXTERNAL_BOT, song_name)
 
-    options = []
-    # collect up to 5 audio messages
     async for msg in client.iter_messages(EXTERNAL_BOT, limit=10):
         if msg.audio:
-            options.append({
+            return {
                 "file_id": msg.id,
-                "title": msg.audio.title or "Unknown",
-                "performer": msg.audio.performer or "Unknown",
-                "duration": msg.audio.duration
-            })
-        if len(options) >= 5:
-            break
+                "title": getattr(msg.audio, "title", "Unknown"),
+                "performer": getattr(msg.audio, "performer", "Unknown"),
+            }
+        elif msg.document:
+            # fallback for generic documents
+            file_name = getattr(msg.document, "attributes", [{}])
+            if file_name and hasattr(file_name[0], "file_name"):
+                name = file_name[0].file_name
+            else:
+                name = "Unknown.mp3"
+            return {
+                "file_id": msg.id,
+                "title": name,
+                "performer": "Unknown",
+            }
 
-    return options
+    return None
+
 
 
 async def download_audio(message_id: int, path: str):
