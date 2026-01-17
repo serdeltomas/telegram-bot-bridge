@@ -1,21 +1,17 @@
 import asyncio
-from aiogram import Bot, Dispatcher
+from aiogram import Bot
+from bot.handlers import router  # import router once
 from bot.config import BOT_TOKEN
-from bot.handlers import router
-from telethon_client.client import start_client
 
+bot = Bot(token=BOT_TOKEN)
 
 async def main():
-    # Start Telethon user client
-    await start_client()
-
-    # Start Telegram bot
-    bot = Bot(token=BOT_TOKEN)
+    from aiogram import Dispatcher
     dp = Dispatcher()
     dp.include_router(router)
 
+    await bot.delete_webhook(drop_pending_updates=True)  # if webhook not used
     await dp.start_polling(bot)
-
 
 if __name__ == "__main__":
     asyncio.run(main())
