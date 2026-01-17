@@ -2,6 +2,7 @@ import asyncio
 from telethon_client.client import client
 from bot.config import EXTERNAL_BOT
 from telethon import functions, events
+from telethon.tl.types import DocumentAttributeAudio
 
 async def query_external_bot_first(song_name: str):
     print(">>> Sending query:", song_name)
@@ -60,28 +61,43 @@ async def query_external_bot_first(song_name: str):
 async def download_audio(message_id: int, path: str):
     """Download a specific audio or document message by message_id."""
     async for msg in client.iter_messages(EXTERNAL_BOT, ids=message_id):
-        filename = "Unknown"
+        filename = "Unknown.mp3"
 
         if msg.audio:
-            performer = getattr(msg.audio, "performer", "Unknown")
-            title = getattr(msg.audio, "title", "Unknown")
-            filename = f"{performer} - {title}.mp3"
+            performer = getattr(msg.audio, "performer", None)
+            title = getattr(msg.audio, "title", None)
+            if performer and title:
+                filename = f"{performer} - {title}.mp3"
+            elif title:
+                filename = f"{title}.mp3"
             await msg.download_media(file=f"{path}/{filename}")
             return filename
 
         elif msg.document:
-            # Try to get original file name if available
-            doc_name = None
+            # Check if the document has audio attributes
+            performer = None
+            title = None
             if msg.document.attributes:
                 for attr in msg.document.attributes:
-                    if hasattr(attr, "file_name"):
-                        doc_name = attr.file_name
+                    if isinstance(attr, DocumentAttributeAudio):
+                        performer = getattr(attr, "performer", None)
+                        title = getattr(attr, "title", None)
                         break
-            filename = doc_name or "Unknown_file"
+
+            if performer and title:
+                filename = f"{performer} - {title}.mp3"
+            elif title:
+                filename = f"{title}.mp3"
+            else:
+                # fallback to original file name
+                if hasattr(msg.document, "file_name") and msg.document.file_name:
+                    filename = msg.document.file_name
+
             await msg.download_media(file=f"{path}/{filename}")
             return filename
 
     return None
+
 
 
 
