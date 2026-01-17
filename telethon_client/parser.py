@@ -27,7 +27,7 @@ async def query_external_bot_first(song_name: str):
             )
 
             # Wait for the bot to send the actual file
-            await asyncio.sleep(1)
+            await asyncio.sleep(2)
 
             # Now fetch the resulting message that contains the actual file
             async for file_msg in client.iter_messages(EXTERNAL_BOT, limit=5):
