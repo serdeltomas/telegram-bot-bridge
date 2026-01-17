@@ -1,35 +1,32 @@
 import asyncio
 from telethon_client.client import client
 from bot.config import EXTERNAL_BOT
-
+from telethon.tl.types import DocumentAttributeAudio
 
 async def query_external_bot(song_name: str):
-    """Send song query to @fmusbot and collect audio options."""
-    # send the query to the external bot
     await client.send_message(EXTERNAL_BOT, song_name)
-
     options = []
+
     async for msg in client.iter_messages(EXTERNAL_BOT, limit=10):
+        # Case 1: audio
         if msg.audio:
             options.append({
-                "id": msg.id,
+                "file_id": msg.id,
                 "title": msg.audio.title or "Unknown",
                 "performer": msg.audio.performer or "Unknown",
                 "duration": msg.audio.duration
             })
-        elif msg.document and msg.document.mime_type.startswith("audio"):
-            # Some bots send audio as document
-            options.append({
-                "id": msg.id,
-                "title": msg.document.attributes[0].title if msg.document.attributes else "Unknown",
-                "performer": msg.document.attributes[0].performer if msg.document.attributes else "Unknown",
-                "duration": msg.document.attributes[0].duration if msg.document.attributes else 0
-            })
-    
-    if not options:
-        return "❌ No audio found"
+        # Case 2: document with audio
+        elif msg.document:
+            for attr in msg.document.attributes:
+                if isinstance(attr, DocumentAttributeAudio):
+                    options.append({
+                        "file_id": msg.id,
+                        "title": attr.title or "Unknown",
+                        "performer": attr.performer or "Unknown",
+                        "duration": attr.duration
+                    })
     return options
-
 
 
 async def download_audio(message_id: int, path: str):
