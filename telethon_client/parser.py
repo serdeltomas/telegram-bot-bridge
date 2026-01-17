@@ -7,38 +7,35 @@ async def query_external_bot_first(song_name: str):
     print(">>> Sending query:", song_name)
     await client.send_message(EXTERNAL_BOT, song_name)
 
-    # 1️⃣ Get the latest menu message with buttons
-    menu_msg = None
-    async for msg in client.iter_messages(EXTERNAL_BOT, limit=10):
-        if msg.reply_markup:
-            menu_msg = msg
-            break  # take the newest one (iter_messages returns newest first)
-
-    if not menu_msg:
-        print(">>> No menu found")
-        return None
-
-    print(">>> Latest menu found, msg_id =", menu_msg.id, "at", menu_msg.date.isoformat())
-
-    # 2️⃣ Pick the first button
-    first_button = menu_msg.reply_markup.rows[0].buttons[0]
-
-    # 3️⃣ Prepare a future to wait for the media
     loop = asyncio.get_running_loop()
-    future = loop.create_future()
+    future_menu = loop.create_future()
+    future_media = loop.create_future()
 
-    # 4️⃣ Handler to catch the next audio/document sent by the bot
+    # 1️⃣ Catch the new menu sent by the bot
     @client.on(events.NewMessage(chats=EXTERNAL_BOT))
-    async def handler(event):
+    async def menu_handler(event):
         m = event.message
-        if m.audio or m.document:
-            print(">>> Accepted media msg:", m.id, m.date.isoformat())
-            if not future.done():
-                future.set_result(m)
+        if m.reply_markup:  # It's a menu
+            print(">>> New menu received:", m.id, m.date.isoformat())
+            if not future_menu.done():
+                future_menu.set_result(m)
 
     try:
-        # 5️⃣ Click the button
-        print(">>> Clicking button")
+        # 2️⃣ Wait for the new menu to arrive (timeout 10s)
+        menu_msg = await asyncio.wait_for(future_menu, timeout=10)
+        first_button = menu_msg.reply_markup.rows[0].buttons[0]
+
+        # 3️⃣ Catch the next media sent by the bot
+        @client.on(events.NewMessage(chats=EXTERNAL_BOT))
+        async def media_handler(event):
+            m = event.message
+            if m.audio or m.document:
+                print(">>> Accepted media msg:", m.id, m.date.isoformat())
+                if not future_media.done():
+                    future_media.set_result(m)
+
+        # 4️⃣ Click the button
+        print(">>> Clicking button", first_button.text)
         await client(
             functions.messages.GetBotCallbackAnswerRequest(
                 peer=EXTERNAL_BOT,
@@ -47,17 +44,17 @@ async def query_external_bot_first(song_name: str):
             )
         )
 
-        # 6️⃣ Wait for the media to arrive (timeout 20s)
-        media_msg = await asyncio.wait_for(future, timeout=20)
+        # 5️⃣ Wait for the media to arrive (timeout 20s)
+        media_msg = await asyncio.wait_for(future_media, timeout=20)
         return {"file_id": media_msg.id}
 
     except asyncio.TimeoutError:
-        print(">>> Timeout: No media received from bot")
+        print(">>> Timeout: Bot did not send menu or media")
         return None
 
     finally:
-        # Always remove handler to avoid memory leaks
-        client.remove_event_handler(handler)
+        client.remove_event_handler(menu_handler)
+        client.remove_event_handler(media_handler)
 
 
 async def download_audio(message_id: int, path: str):
