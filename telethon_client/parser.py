@@ -1,9 +1,8 @@
 import asyncio
 from telethon_client.client import client
 from bot.config import EXTERNAL_BOT
-from telethon import functions, types
+from telethon import functions, types, events
 
-from telethon import functions
 
 async def query_external_bot_first(song_name: str):
     await client.send_message(EXTERNAL_BOT, song_name)
@@ -13,7 +12,15 @@ async def query_external_bot_first(song_name: str):
         if msg.reply_markup:
             first_button = msg.reply_markup.rows[0].buttons[0]
 
-            # 2️⃣ Click the first button
+            # 2️⃣ Prepare waiter BEFORE clicking
+            waiter = client.wait_for(
+                events.NewMessage(
+                    from_users=EXTERNAL_BOT
+                ),
+                timeout=15
+            )
+
+            # 3️⃣ Click first button
             await client(
                 functions.messages.GetBotCallbackAnswerRequest(
                     peer=EXTERNAL_BOT,
@@ -22,21 +29,16 @@ async def query_external_bot_first(song_name: str):
                 )
             )
 
-            menu_msg_id = msg.id
-            break
-    else:
-        return None
+            # 4️⃣ Wait for the resulting file
+            new_msg = await waiter
 
-    # 3️⃣ Wait for the resulting file (ONLY newer messages)
-    async for file_msg in client.iter_messages(
-        EXTERNAL_BOT,
-        min_id=menu_msg_id,
-        limit=10
-    ):
-        if file_msg.audio or file_msg.document:
-            return {"file_id": file_msg.id}
+            if new_msg.audio or new_msg.document:
+                return {"file_id": new_msg.id}
+
+            return None
 
     return None
+
 
 
 
