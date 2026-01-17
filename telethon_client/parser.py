@@ -27,15 +27,13 @@ async def query_external_bot_first(song_name: str):
         @client.on(events.NewMessage(chats=EXTERNAL_BOT))
         async def handler(event):
             m = event.message
-
-            # 🔐 CRITICAL FILTER
-            if m.date <= menu_time:
-                return
-
+        
+            # Accept any media message (audio/document) that is after the menu click
             if m.audio or m.document:
                 print(">>> Accepted media msg:", m.id, m.date.isoformat())
                 if not future.done():
                     future.set_result(m)
+
 
         try:
             print(">>> Clicking button")
