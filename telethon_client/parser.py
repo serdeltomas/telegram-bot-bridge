@@ -7,20 +7,25 @@ from telethon import functions, types, events
 async def query_external_bot_first(song_name: str):
     await client.send_message(EXTERNAL_BOT, song_name)
 
-    # 1️⃣ Find the menu message
+    # 1️⃣ Find menu message
     async for msg in client.iter_messages(EXTERNAL_BOT, limit=10):
-        if msg.reply_markup:
-            first_button = msg.reply_markup.rows[0].buttons[0]
+        if not msg.reply_markup:
+            continue
 
-            # 2️⃣ Prepare waiter BEFORE clicking
-            waiter = client.wait_for(
-                events.NewMessage(
-                    from_users=EXTERNAL_BOT
-                ),
-                timeout=15
-            )
+        first_button = msg.reply_markup.rows[0].buttons[0]
 
-            # 3️⃣ Click first button
+        loop = asyncio.get_running_loop()
+        future = loop.create_future()
+
+        # 2️⃣ Event handler for the next media message
+        @client.on(events.NewMessage(from_users=EXTERNAL_BOT))
+        async def handler(event):
+            if event.message.audio or event.message.document:
+                if not future.done():
+                    future.set_result(event.message)
+
+        try:
+            # 3️⃣ Click button
             await client(
                 functions.messages.GetBotCallbackAnswerRequest(
                     peer=EXTERNAL_BOT,
@@ -29,15 +34,16 @@ async def query_external_bot_first(song_name: str):
                 )
             )
 
-            # 4️⃣ Wait for the resulting file
-            new_msg = await waiter
+            # 4️⃣ Wait for file
+            new_msg = await asyncio.wait_for(future, timeout=15)
+            return {"file_id": new_msg.id}
 
-            if new_msg.audio or new_msg.document:
-                return {"file_id": new_msg.id}
-
-            return None
+        finally:
+            # 5️⃣ Always unregister handler
+            client.remove_event_handler(handler)
 
     return None
+
 
 
 
