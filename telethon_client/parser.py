@@ -4,10 +4,21 @@ from bot.config import EXTERNAL_BOT
 
 
 async def query_external_bot_first(song_name: str):
-    """Send song query to @fmusbot and return the first file (audio or document)."""
+    """Send song query to @fmusbot and get the first audio/document file."""
     await client.send_message(EXTERNAL_BOT, song_name)
+    await asyncio.sleep(1)  # wait for bot response
 
-    async for msg in client.iter_messages(EXTERNAL_BOT, limit=10):
+    # get the latest message with buttons
+    async for msg in client.iter_messages(EXTERNAL_BOT, limit=20, from_user=EXTERNAL_BOT):
+        if msg.reply_markup:
+            # click the first inline button
+            button = msg.reply_markup.rows[0].buttons[0]
+            await client.send_message(EXTERNAL_BOT, button.data)
+            await asyncio.sleep(1)  # wait for file to arrive
+            break
+
+    # now fetch the latest message (audio or document)
+    async for msg in client.iter_messages(EXTERNAL_BOT, limit=5, from_user=EXTERNAL_BOT):
         if msg.audio:
             return {
                 "file_id": msg.id,
@@ -15,19 +26,20 @@ async def query_external_bot_first(song_name: str):
                 "performer": getattr(msg.audio, "performer", "Unknown"),
             }
         elif msg.document:
-            # fallback for generic documents
-            file_name = getattr(msg.document, "attributes", [{}])
-            if file_name and hasattr(file_name[0], "file_name"):
-                name = file_name[0].file_name
-            else:
-                name = "Unknown.mp3"
+            doc_name = None
+            if msg.document.attributes:
+                for attr in msg.document.attributes:
+                    if hasattr(attr, "file_name"):
+                        doc_name = attr.file_name
+                        break
             return {
                 "file_id": msg.id,
-                "title": name,
+                "title": doc_name or "Unknown_file",
                 "performer": "Unknown",
             }
 
     return None
+
 
 
 
