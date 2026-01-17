@@ -3,39 +3,53 @@ from telethon_client.client import client
 from bot.config import EXTERNAL_BOT
 from telethon import functions, events
 from telethon.tl.types import DocumentAttributeAudio
+import re
 
-async def query_external_bot_first(song_name: str):
+def clean_filename(name: str) -> str:
+    """Clean string to be safe as a filename and strip duration prefix."""
+    # Remove things like '04:29 | ' at the start
+    name = re.sub(r'^\d{1,2}:\d{2}\s*\|\s*', '', name)
+    # Remove invalid filename characters
+    name = re.sub(r'[\\/*?:"<>|]', "", name)
+    return name.strip()
+
+async def query_external_bot_first(song_name: str, download_path: str):
     print(">>> Sending query:", song_name)
     await client.send_message(EXTERNAL_BOT, song_name)
 
     loop = asyncio.get_running_loop()
     future_menu = loop.create_future()
     future_media = loop.create_future()
+    filename_from_button = None
 
     # 1️⃣ Catch the new menu sent by the bot
     @client.on(events.NewMessage(chats=EXTERNAL_BOT))
     async def menu_handler(event):
         m = event.message
         if m.reply_markup:  # It's a menu
-            print(">>> New menu received:", m.id, m.date.isoformat())
+            nonlocal filename_from_button
+            menu_msg = m
+            first_button = menu_msg.reply_markup.rows[0].buttons[0]
+            filename_from_button = clean_filename(first_button.text)
+            print(">>> New menu received:", menu_msg.id, menu_msg.date.isoformat())
             if not future_menu.done():
-                future_menu.set_result(m)
+                future_menu.set_result(menu_msg)
+
+    # 2️⃣ Catch the next media sent by the bot
+    @client.on(events.NewMessage(chats=EXTERNAL_BOT))
+    async def media_handler(event):
+        m = event.message
+        if m.audio or m.document:
+            print(">>> Accepted media msg:", m.id, m.date.isoformat())
+            if not future_media.done():
+                future_media.set_result(m)
 
     try:
-        # 2️⃣ Wait for the new menu to arrive (timeout 10s)
+        # Wait for the new menu
         menu_msg = await asyncio.wait_for(future_menu, timeout=10)
         first_button = menu_msg.reply_markup.rows[0].buttons[0]
 
-        # 3️⃣ Catch the next media sent by the bot
-        @client.on(events.NewMessage(chats=EXTERNAL_BOT))
-        async def media_handler(event):
-            m = event.message
-            if m.audio or m.document:
-                print(">>> Accepted media msg:", m.id, m.date.isoformat())
-                if not future_media.done():
-                    future_media.set_result(m)
-
-        # 4️⃣ Click the button
+        # Click the button
         print(">>> Clicking button", first_button.text)
         await client(
             functions.messages.GetBotCallbackAnswerRequest(
@@ -45,9 +59,16 @@ async def query_external_bot_first(song_name: str):
             )
         )
 
-        # 5️⃣ Wait for the media to arrive (timeout 20s)
+        # Wait for the media to arrive
         media_msg = await asyncio.wait_for(future_media, timeout=20)
-        return {"file_id": media_msg.id}
+
+        # Use the cleaned button text as filename
+        filename = f"{filename_from_button}.mp3" if filename_from_button else "Unknown.mp3"
+
+        # Download the media
+        await media_msg.download_media(file=f"{download_path}/{filename}")
+        print(f">>> Downloaded as {filename}")
+        return filename
 
     except asyncio.TimeoutError:
         print(">>> Timeout: Bot did not send menu or media")
@@ -97,14 +118,3 @@ async def download_audio(message_id: int, path: str):
             return filename
 
     return None
-
-
-
-
-async def download_latest_file(filename: str, path: str):
-    """Download the latest file from the external bot."""
-    async for msg in client.iter_messages(EXTERNAL_BOT, limit=1):
-        if msg.file:
-            await msg.download_media(file=f"{path}/{filename}")
-            return True
-    return False
