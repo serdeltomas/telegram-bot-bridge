@@ -9,7 +9,7 @@ router = Router()
 @router.message(F.text)
 async def handle_search(message: Message):
     # get only the first audio/document from @fmusbot
-    file_info = await query_external_bot_first(message.text)
+    file_info = await query_external_bot_first(message.text, DOWNLOAD_PATH)
 
     if not file_info:
         await message.answer("❌ No audio found")
