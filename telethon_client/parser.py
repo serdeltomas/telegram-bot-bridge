@@ -12,8 +12,9 @@ async def query_external_bot_first(song_name: str):
     async for msg in client.iter_messages(EXTERNAL_BOT, limit=10):
         if not msg.reply_markup:
             continue
-
         menu_msg = msg
+        break  # take the first (newest) one
+
         menu_time = msg.date
 
         print(">>> Menu found, msg_id =", msg.id, "at", menu_time.isoformat())
