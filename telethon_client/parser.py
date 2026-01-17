@@ -8,6 +8,11 @@ async def query_external_bot_first(song_name: str):
     await client.send_message(EXTERNAL_BOT, song_name)
 
     async for msg in client.iter_messages(EXTERNAL_BOT, limit=10):
+        # Debug: print full message object
+        print("=== Received Message ===")
+        print(msg.stringify())  # Telethon's built-in method for full inspection
+        print("========================")
+
         if msg.audio:
             return {
                 "file_id": msg.id,
@@ -16,18 +21,20 @@ async def query_external_bot_first(song_name: str):
             }
         elif msg.document:
             # fallback for generic documents
-            file_name = getattr(msg.document, "attributes", [{}])
-            if file_name and hasattr(file_name[0], "file_name"):
-                name = file_name[0].file_name
-            else:
-                name = "Unknown.mp3"
+            doc_name = None
+            if msg.document.attributes:
+                for attr in msg.document.attributes:
+                    if hasattr(attr, "file_name"):
+                        doc_name = attr.file_name
+                        break
             return {
                 "file_id": msg.id,
-                "title": name,
+                "title": doc_name or "Unknown_file",
                 "performer": "Unknown",
             }
 
     return None
+
 
 
 
