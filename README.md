@@ -34,7 +34,7 @@ User ↓ Your Bot (Bot API / aiogram) ↓ User Client (Telethon) ↓ External Bo
 
 
 ## 📁 Project Structure
-
+```
 telegram-bot-bridge/
 ├── bot/
 │   ├── main.py              # Bot entrypoint
@@ -52,7 +52,7 @@ telegram-bot-bridge/
 ├── .env.example             # Environment variables template
 ├── Dockerfile               # Docker build file
 └── README.md                # Project documentation
-
+```
 
 
 
