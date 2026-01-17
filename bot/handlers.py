@@ -1,6 +1,6 @@
 from aiogram import Router, types
 from aiogram.filters import Command
-from bot.parser import query_external_bot, download_audio
+from telethon_client.parser import query_external_bot, download_audio
 
 router = Router()
 
