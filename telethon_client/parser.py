@@ -4,21 +4,10 @@ from bot.config import EXTERNAL_BOT
 
 
 async def query_external_bot_first(song_name: str):
-    """Send song query to @fmusbot and get the first audio/document file."""
+    """Send song query to @fmusbot and return the first file (audio or document)."""
     await client.send_message(EXTERNAL_BOT, song_name)
-    await asyncio.sleep(1)  # wait for bot response
 
-    # get the latest message with buttons
-    async for msg in client.iter_messages(EXTERNAL_BOT, limit=20, from_user=EXTERNAL_BOT):
-        if msg.reply_markup:
-            # click the first inline button
-            button = msg.reply_markup.rows[0].buttons[0]
-            await client.send_message(EXTERNAL_BOT, button.data)
-            await asyncio.sleep(1)  # wait for file to arrive
-            break
-
-    # now fetch the latest message (audio or document)
-    async for msg in client.iter_messages(EXTERNAL_BOT, limit=5, from_user=EXTERNAL_BOT):
+    async for msg in client.iter_messages(EXTERNAL_BOT, limit=10):
         if msg.audio:
             return {
                 "file_id": msg.id,
@@ -26,15 +15,15 @@ async def query_external_bot_first(song_name: str):
                 "performer": getattr(msg.audio, "performer", "Unknown"),
             }
         elif msg.document:
-            doc_name = None
-            if msg.document.attributes:
-                for attr in msg.document.attributes:
-                    if hasattr(attr, "file_name"):
-                        doc_name = attr.file_name
-                        break
+            # fallback for generic documents
+            file_name = getattr(msg.document, "attributes", [{}])
+            if file_name and hasattr(file_name[0], "file_name"):
+                name = file_name[0].file_name
+            else:
+                name = "Unknown.mp3"
             return {
                 "file_id": msg.id,
-                "title": doc_name or "Unknown_file",
+                "title": name,
                 "performer": "Unknown",
             }
 
