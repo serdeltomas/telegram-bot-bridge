@@ -3,39 +3,41 @@ from telethon_client.client import client
 from bot.config import EXTERNAL_BOT
 from telethon import functions, types
 
+from telethon import functions
+
 async def query_external_bot_first(song_name: str):
-    """Send song query and download the first FMUS file automatically."""
     await client.send_message(EXTERNAL_BOT, song_name)
 
-    
-    # Wait a short moment for the bot to respond
-    await asyncio.sleep(2)  # tweak if needed
-
-    async for msg in client.iter_messages(EXTERNAL_BOT, limit=5):
-        if msg.reply_markup:  # There are inline buttons
-
+    # 1️⃣ Find the menu message
+    async for msg in client.iter_messages(EXTERNAL_BOT, limit=10):
+        if msg.reply_markup:
             first_button = msg.reply_markup.rows[0].buttons[0]
-            button_data = first_button.data
 
-            # Trigger the button to get the audio/document
-            response = await client(
+            # 2️⃣ Click the first button
+            await client(
                 functions.messages.GetBotCallbackAnswerRequest(
                     peer=EXTERNAL_BOT,
                     msg_id=msg.id,
-                    data=button_data
+                    data=first_button.data
                 )
             )
 
-            # Wait for the bot to send the actual file
-            await asyncio.sleep(2)
+            menu_msg_id = msg.id
+            break
+    else:
+        return None
 
-            # Now fetch the resulting message that contains the actual file
-            async for file_msg in client.iter_messages(EXTERNAL_BOT, limit=5):
-                if file_msg.audio or file_msg.document:
-                    # return first found file
-                    return {"file_id": file_msg.id}
-                    
+    # 3️⃣ Wait for the resulting file (ONLY newer messages)
+    async for file_msg in client.iter_messages(
+        EXTERNAL_BOT,
+        min_id=menu_msg_id,
+        limit=10
+    ):
+        if file_msg.audio or file_msg.document:
+            return {"file_id": file_msg.id}
+
     return None
+
 
 
 async def download_audio(message_id: int, path: str):
