@@ -2,53 +2,51 @@ import asyncio
 from telethon_client.client import client
 from bot.config import EXTERNAL_BOT
 from telethon import functions, types, events
+from datetime import datetime
 
 async def query_external_bot_first(song_name: str):
     print(">>> Sending query:", song_name)
     await client.send_message(EXTERNAL_BOT, song_name)
 
-    # 1️⃣ Find the menu message
+    # 1️⃣ Find menu message
     async for msg in client.iter_messages(EXTERNAL_BOT, limit=10):
         if not msg.reply_markup:
             continue
-        print(">>> Menu found, msg_id =", msg.id)
-        
-        button = msg.reply_markup.rows[0].buttons[0]
-        menu_msg_id = msg.id
+
+        menu_msg = msg
+        menu_time = msg.date
+
+        print(">>> Menu found, msg_id =", msg.id, "at", menu_time.isoformat())
+
+        first_button = msg.reply_markup.rows[0].buttons[0]
 
         loop = asyncio.get_running_loop()
         future = loop.create_future()
 
-        # 2️⃣ Listen for NEW media messages AFTER menu
         @client.on(events.NewMessage(chats=EXTERNAL_BOT))
         async def handler(event):
             m = event.message
 
-            # Must be newer than the menu
-            if m.id <= menu_msg_id:
+            # 🔐 CRITICAL FILTER
+            if m.date <= menu_time:
                 return
 
-            # Must be actual media
-            if not (m.audio or m.document):
-                return
-
-            if not future.done():
-                future.set_result(m)
+            if m.audio or m.document:
+                print(">>> Accepted media msg:", m.id, m.date.isoformat())
+                if not future.done():
+                    future.set_result(m)
 
         try:
-            print(">>> Clicking button at", datetime.utcnow().isoformat())
-            # 3️⃣ Click the first button
+            print(">>> Clicking button")
             await client(
                 functions.messages.GetBotCallbackAnswerRequest(
                     peer=EXTERNAL_BOT,
-                    msg_id=menu_msg_id,
-                    data=button.data
+                    msg_id=menu_msg.id,
+                    data=first_button.data
                 )
             )
-            print(">>> Button clicked")
 
-            # 4️⃣ Wait for resulting file
-            media_msg = await asyncio.wait_for(future, timeout=15)
+            media_msg = await asyncio.wait_for(future, timeout=20)
             return {"file_id": media_msg.id}
 
         finally:
