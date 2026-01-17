@@ -118,3 +118,12 @@ async def download_audio(message_id: int, path: str):
             return filename
 
     return None
+
+
+async def download_latest_file(filename: str, path: str):
+    """Download the latest file from the external bot."""
+    async for msg in client.iter_messages(EXTERNAL_BOT, limit=1):
+        if msg.file:
+            await msg.download_media(file=f"{path}/{filename}")
+            return True
+    return False
