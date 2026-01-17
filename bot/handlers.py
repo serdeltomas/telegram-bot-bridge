@@ -1,6 +1,6 @@
 from aiogram import Router, F
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
-from telethon_client.parser import query_external_bot, download_audio_from_selection
+from telethon_client.parser import query_external_bot, download_audio
 from bot.config import DOWNLOAD_PATH
 
 router = Router()
@@ -41,7 +41,7 @@ async def handle_download(call: CallbackQuery):
         await call.message.edit_text("❌ Session expired")
         return
 
-    filename = await download_audio_from_selection(msg_id, DOWNLOAD_PATH)
+    filename = await download_audio(msg_id, DOWNLOAD_PATH)
 
     if filename:
         await call.message.edit_text(f"✅ Downloaded: {filename}")
