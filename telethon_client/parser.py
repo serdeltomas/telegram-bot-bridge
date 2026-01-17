@@ -11,7 +11,7 @@ async def query_external_bot_first(song_name: str):
     # Wait a short moment for the bot to respond
     await asyncio.sleep(2)  # tweak if needed
 
-    async for msg in client.iter_messages(EXTERNAL_BOT, limit=1):
+    async for msg in client.iter_messages(EXTERNAL_BOT, limit=5):
         if msg.reply_markup:  # There are inline buttons
 
             first_button = msg.reply_markup.rows[0].buttons[0]
@@ -30,7 +30,7 @@ async def query_external_bot_first(song_name: str):
             await asyncio.sleep(1)
 
             # Now fetch the resulting message that contains the actual file
-            async for file_msg in client.iter_messages(EXTERNAL_BOT, limit=1):
+            async for file_msg in client.iter_messages(EXTERNAL_BOT, limit=5):
                 if file_msg.audio or file_msg.document:
                     # return first found file
                     return {"file_id": file_msg.id}
