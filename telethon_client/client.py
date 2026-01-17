@@ -1,5 +1,5 @@
 from telethon import TelegramClient
-from bot.config import API_ID, API_HASH
+from bot.config import API_ID, API_HASH, EXTERNAL_BOT
 
 # Create Telethon client
 client = TelegramClient("user_session", API_ID, API_HASH)
