@@ -4,16 +4,20 @@ from bot.config import EXTERNAL_BOT
 from telethon import functions, types
 
 async def query_external_bot_first(song_name: str):
-    """Send song query and download the first FMUS file automatically."""
+    """Query FMUS and download the first result from the latest response."""
     await client.send_message(EXTERNAL_BOT, song_name)
 
-    async for msg in client.iter_messages(EXTERNAL_BOT, limit=5):
-        if msg.reply_markup:  # There are inline buttons
+    # Wait a short moment for the bot to respond
+    await asyncio.sleep(1.5)  # tweak if needed
+
+    # Fetch the latest message only
+    async for msg in client.iter_messages(EXTERNAL_BOT, limit=1):
+        if msg.reply_markup:  # there are inline buttons
             first_button = msg.reply_markup.rows[0].buttons[0]
             button_data = first_button.data
 
             # Trigger the button to get the audio/document
-            response = await client(
+            await client(
                 functions.messages.GetBotCallbackAnswerRequest(
                     peer=EXTERNAL_BOT,
                     msg_id=msg.id,
@@ -21,17 +25,15 @@ async def query_external_bot_first(song_name: str):
                 )
             )
 
-            # Now fetch the resulting message that contains the actual file
-            async for file_msg in client.iter_messages(EXTERNAL_BOT, limit=5):
+            # Wait for the bot to send the actual file
+            await asyncio.sleep(0.5)
+
+            # Download the latest message containing audio/document
+            async for file_msg in client.iter_messages(EXTERNAL_BOT, limit=1):
                 if file_msg.audio or file_msg.document:
-                    # return first found file
-                    return {"file_id": file_msg.id}
-
+                    filename = await download_audio_msg(file_msg)
+                    return filename
     return None
-
-
-
-
 
 
 async def download_audio(message_id: int, path: str):
