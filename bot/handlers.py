@@ -5,8 +5,12 @@ from bot.config import DOWNLOAD_PATH
 router = Router()
 user_cache = {}  # store user choices
 
-@router.message(commands=["search"])
+from aiogram import types
+from aiogram.filters import Command
+
+@router.message(Command(commands=["search"]))
 async def handle_search(message: types.Message):
+
     query = message.get_args()
     if not query:
         await message.answer("Please provide a song name, e.g., /search Imagine Dragons")
