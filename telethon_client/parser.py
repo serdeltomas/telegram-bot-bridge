@@ -4,13 +4,15 @@ from bot.config import EXTERNAL_BOT
 from telethon import functions, types, events
 
 async def query_external_bot_first(song_name: str):
+    print(">>> Sending query:", song_name)
     await client.send_message(EXTERNAL_BOT, song_name)
 
     # 1️⃣ Find the menu message
     async for msg in client.iter_messages(EXTERNAL_BOT, limit=10):
         if not msg.reply_markup:
             continue
-
+        print(">>> Menu found, msg_id =", msg.id)
+        
         button = msg.reply_markup.rows[0].buttons[0]
         menu_msg_id = msg.id
 
@@ -34,6 +36,7 @@ async def query_external_bot_first(song_name: str):
                 future.set_result(m)
 
         try:
+            print(">>> Clicking button at", datetime.utcnow().isoformat())
             # 3️⃣ Click the first button
             await client(
                 functions.messages.GetBotCallbackAnswerRequest(
@@ -42,6 +45,7 @@ async def query_external_bot_first(song_name: str):
                     data=button.data
                 )
             )
+            print(">>> Button clicked")
 
             # 4️⃣ Wait for resulting file
             media_msg = await asyncio.wait_for(future, timeout=15)
