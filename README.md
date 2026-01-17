@@ -81,3 +81,14 @@ API_ID=123456
 API_HASH=YOUR_API_HASH
 EXTERNAL_BOT=@OtherBotUsername
 DOWNLOAD_PATH=storage/downloads
+```
+
+Running on Debian
+```
+apt update && apt install -y python3 python3-venv git
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+python bot/main.py
+```
