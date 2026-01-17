@@ -36,3 +36,31 @@ User ↓ Your Bot (Bot API / aiogram) ↓ User Client (Telethon) ↓ External Bo
 ## 📁 Project Structure
 
 telegram-bot-bridge/ │ ├── bot/ │ ├── main.py # Bot entrypoint │ ├── handlers.py # Commands & callbacks │ ├── config.py # Env config │ ├── telethon_client/ │ ├── client.py # Telethon user client │ ├── parser.py # Parses external bot responses │ ├── storage/ │ └── downloads/ # Downloaded files │ ├── requirements.txt ├── .env.example ├── Dockerfile └── README.md
+
+
+
+---
+
+
+## ⚙️ Requirements
+- Python 3.10+
+- Telegram API ID & HASH
+- Telegram Bot Token
+
+
+---
+
+
+## 🔐 `.env.example`
+```env
+BOT_TOKEN=YOUR_BOT_TOKEN
+API_ID=123456
+API_HASH=YOUR_API_HASH
+EXTERNAL_BOT=@fmusbot
+DOWNLOAD_PATH=storage/downloads/audio
+```env
+BOT_TOKEN=YOUR_BOT_TOKEN
+API_ID=123456
+API_HASH=YOUR_API_HASH
+EXTERNAL_BOT=@OtherBotUsername
+DOWNLOAD_PATH=storage/downloads
