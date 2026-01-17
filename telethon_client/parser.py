@@ -1,39 +1,34 @@
 import asyncio
 from telethon_client.client import client
 from bot.config import EXTERNAL_BOT
-
+from telethon import functions, types
 
 async def query_external_bot_first(song_name: str):
-    """Send song query to @fmusbot and return the first file (audio or document)."""
+    """Send song query and download the first FMUS file automatically."""
     await client.send_message(EXTERNAL_BOT, song_name)
 
-    async for msg in client.iter_messages(EXTERNAL_BOT, limit=10):
-        # Debug: print full message object
-        print("=== Received Message ===")
-        print(msg.stringify())  # Telethon's built-in method for full inspection
-        print("========================")
+    async for msg in client.iter_messages(EXTERNAL_BOT, limit=5):
+        if msg.reply_markup:  # There are inline buttons
+            first_button = msg.reply_markup.rows[0].buttons[0]
+            button_data = first_button.data
 
-        if msg.audio:
-            return {
-                "file_id": msg.id,
-                "title": getattr(msg.audio, "title", "Unknown"),
-                "performer": getattr(msg.audio, "performer", "Unknown"),
-            }
-        elif msg.document:
-            # fallback for generic documents
-            doc_name = None
-            if msg.document.attributes:
-                for attr in msg.document.attributes:
-                    if hasattr(attr, "file_name"):
-                        doc_name = attr.file_name
-                        break
-            return {
-                "file_id": msg.id,
-                "title": doc_name or "Unknown_file",
-                "performer": "Unknown",
-            }
+            # Trigger the button to get the audio/document
+            response = await client(
+                functions.messages.GetBotCallbackAnswerRequest(
+                    peer=EXTERNAL_BOT,
+                    msg_id=msg.id,
+                    data=button_data
+                )
+            )
+
+            # Now fetch the resulting message that contains the actual file
+            async for file_msg in client.iter_messages(EXTERNAL_BOT, limit=5):
+                if file_msg.audio or file_msg.document:
+                    # return first found file
+                    return {"file_id": file_msg.id}
 
     return None
+
 
 
 
