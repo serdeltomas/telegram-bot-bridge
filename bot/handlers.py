@@ -1,49 +1,57 @@
-from aiogram import Router, F
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
-from telethon_client.parser import query_external_bot, download_audio
+from aiogram import types, Router
+from parser import query_external_bot, download_audio_from_selection
 from bot.config import DOWNLOAD_PATH
 
 router = Router()
-user_cache = {}
+user_cache = {}  # store user choices
 
-@router.message(F.text)
-async def handle_search(message: Message):
-    # query @fmusbot for audio options
-    options = await query_external_bot(message.text)
+@router.message(commands=["search"])
+async def handle_search(message: types.Message):
+    query = message.get_args()
+    if not query:
+        await message.answer("Please provide a song name, e.g., /search Imagine Dragons")
+        return
 
+    options = await query_external_bot(query)
     if not options:
         await message.answer("❌ No audio found")
         return
 
-    keyboard = []
-    for idx, opt in enumerate(options):
-        user_cache[f"{message.from_user.id}:{idx}"] = opt["file_id"]
-        keyboard.append([
-            InlineKeyboardButton(
-                text=f"🎵 {opt['performer']} - {opt['title']}",
-                callback_data=str(idx)
-            )
-        ])
+    # Show options to user
+    text = "Select a song to download:\n\n"
+    for i, opt in enumerate(options, start=1):
+        text += f"{i}. {opt['title']}\n"
+    await message.answer(text)
 
-    await message.answer(
-        "🎧 Select audio:",
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard)
-    )
+    # Cache options for user
+    user_cache[message.from_user.id] = options
 
-@router.callback_query()
-async def handle_download(call: CallbackQuery):
-    await call.answer()
-
-    key = f"{call.from_user.id}:{call.data}"
-    msg_id = user_cache.get(key)
-
-    if not msg_id:
-        await call.message.edit_text("❌ Session expired")
+@router.message()
+async def handle_selection(message: types.Message):
+    # Check if user has cached options
+    if message.from_user.id not in user_cache:
         return
 
-    filename = await download_audio(msg_id, DOWNLOAD_PATH)
+    try:
+        idx = int(message.text) - 1
+    except ValueError:
+        await message.answer("Please send a valid number from the list")
+        return
 
-    if filename:
-        await call.message.edit_text(f"✅ Downloaded: {filename}")
+    options = user_cache[message.from_user.id]
+    if not 0 <= idx < len(options):
+        await message.answer("Invalid selection")
+        return
+
+    opt = options[idx]
+    await message.answer("⏳ Downloading...")
+
+    # Click button + download
+    path = await download_audio_from_selection(opt["msg_id"], opt["data"], DOWNLOAD_PATH)
+    if path:
+        await message.answer(f"✅ Downloaded: {path}")
     else:
-        await call.message.edit_text("❌ Download failed")
+        await message.answer("❌ Failed to download audio")
+
+    # Clear cache
+    del user_cache[message.from_user.id]
