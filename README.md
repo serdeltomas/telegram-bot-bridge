@@ -35,7 +35,24 @@ User ↓ Your Bot (Bot API / aiogram) ↓ User Client (Telethon) ↓ External Bo
 
 ## 📁 Project Structure
 
-telegram-bot-bridge/ │ ├── bot/ │ ├── main.py # Bot entrypoint │ ├── handlers.py # Commands & callbacks │ ├── config.py # Env config │ ├── telethon_client/ │ ├── client.py # Telethon user client │ ├── parser.py # Parses external bot responses │ ├── storage/ │ └── downloads/ # Downloaded files │ ├── requirements.txt ├── .env.example ├── Dockerfile └── README.md
+telegram-bot-bridge/
+├── bot/
+│   ├── main.py              # Bot entrypoint
+│   ├── handlers.py          # Commands & callbacks
+│   └── config.py            # Env config
+│
+├── telethon_client/
+│   ├── client.py            # Telethon user client
+│   └── parser.py            # Parses external bot responses
+│
+├── storage/
+│   └── downloads/           # Downloaded files
+│
+├── requirements.txt
+├── .env.example
+├── Dockerfile
+└── README.md
+
 
 
 
