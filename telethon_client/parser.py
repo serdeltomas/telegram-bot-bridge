@@ -1,7 +1,7 @@
 from telethon import TelegramClient, events
 from telethon.tl.functions.messages import GetBotCallbackAnswerRequest
 from telethon.tl.types import DocumentAttributeAudio
-from bot.config import EXTERNAL_BOT, client
+from bot.config import EXTERNAL_BOT
 import os
 
 async def query_external_bot(song_name: str):
