@@ -1,8 +1,10 @@
 from telethon import TelegramClient, events
 from telethon.tl.functions.messages import GetBotCallbackAnswerRequest
 from telethon.tl.types import DocumentAttributeAudio
-from bot.config import EXTERNAL_BOT, client
 import os
+from telethon_client.client import client
+from bot.config import EXTERNAL_BOT
+
 
 async def query_external_bot(song_name: str):
     """Send query to @fmusbot and return inline button options."""
