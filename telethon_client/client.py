@@ -27,24 +27,6 @@ def debug_message_buttons(msg):
         print("No reply markup.")
     print("===========================")
 
-# Handler for debugging menus from the external bot
-@client.on(events.NewMessage(chats=EXTERNAL_BOT))
-async def menu_handler(event):
-    msg = event.message
-    debug_message_buttons(msg)
-
-    # Automatically click the first track button (row 0, button 0)
-    if msg.reply_markup and msg.reply_markup.rows:
-        first_row = msg.reply_markup.rows[0]
-        if first_row.buttons and hasattr(first_row.buttons[0], "data"):
-            print(f"⚡ Automatically clicking button: {first_row.buttons[0].text}")
-            try:
-                # Use Telethon's click() method on the button
-                await asyncio.sleep(2)
-                await msg.click(0)  # 0 = first button in the row
-                print("✅ Button clicked successfully!")
-            except Exception as e:
-                print("❌ Failed to click button:", e)
 
 # Start the client
 if __name__ == "__main__":
