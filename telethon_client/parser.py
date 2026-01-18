@@ -107,7 +107,7 @@ async def query_external_bot_first(song_name: str, download_path: str):
         await menu_msg.click(0)
 
         # Wait for the media to arrive
-        media_msg = await asyncio.wait_for(future_media, timeout=20)
+        media_msg = await asyncio.wait_for(future_media, timeout=30)
 
         # Use the cleaned button text as filename
         filename = f"{filename_from_button}.mp3" if filename_from_button else "Unknown.mp3"
