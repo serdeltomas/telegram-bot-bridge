@@ -14,7 +14,7 @@ async def process_csv(csv_path: str):
                 continue
 
             print(f"🎵 Processing: {song_name}")
-            filename = await query_external_bot_first(song_name, DOWNLOAD_PATH+"/csv_upload")
+            filename = await query_external_bot_first(song_name, DOWNLOAD_PATH+"/topola")
 
             if filename:
                 print(f"✅ Done: {filename}")
