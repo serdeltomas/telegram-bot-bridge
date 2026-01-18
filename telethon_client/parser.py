@@ -10,6 +10,24 @@ from telethon.tl.types import (
     DocumentAttributeAudio,
     MessageMediaWebPage,
 )
+def debug_message_buttons(msg):
+    print("===== DEBUG BOT MENU =====")
+    print("Message ID:", msg.id)
+    print("Text:", msg.text)
+    if msg.reply_markup:
+        print("Reply markup present!")
+        for i, row in enumerate(msg.reply_markup.rows):
+            print(f"Row {i}:")
+            for j, button in enumerate(row.buttons):
+                print(f"  Button {j}: text='{button.text}', type={type(button)}")
+                if hasattr(button, "url"):
+                    print(f"    URL: {button.url}")
+                if hasattr(button, "data"):
+                    print(f"    callback data: {button.data}")
+    else:
+        print("No reply markup.")
+    print("===========================")
+
 
 def inspect_message(msg):
     print("\n" + "=" * 50)
