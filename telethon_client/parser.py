@@ -14,36 +14,42 @@ def clean_filename(name: str) -> str:
     return name.strip()
 
 async def query_external_bot_first(song_name: str, download_path: str, timeout_menu=10, timeout_media=30):
-    """Send query, click first track button, download media."""
     menu_future = asyncio.get_running_loop().create_future()
     media_future = asyncio.get_running_loop().create_future()
     selected_filename = None
 
-    # Handlers
-    @client.on(events.NewMessage(chats=EXTERNAL_BOT))
     async def handler(event):
         nonlocal selected_filename
         msg = event.message
 
-        # Detect menu
-        if msg.reply_markup and not menu_future.done():
+        # --- Detect menu ---
+        if msg.reply_markup:
             for row in msg.reply_markup.rows:
                 btn = row.buttons[0]
                 if hasattr(btn, "data") and btn.data.startswith(b"dl:"):
                     selected_filename = clean_filename(btn.text)
-                    await msg.click(0)
-                    menu_future.set_result(True)
-                    return
+                    try:
+                        await msg.click(0)
+                    except Exception as e:
+                        print("❌ Failed to click button:", e)
+                    # Only set the future if not done
+                    if not menu_future.done():
+                        menu_future.set_result(True)
 
-        # Detect media
+        # --- Detect media ---
         if (msg.audio or msg.document) and not media_future.done():
             media_future.set_result(msg)
 
-    # Send message after handlers
+    # --- Register handler ---
+    client.add_event_handler(handler, events.NewMessage(chats=EXTERNAL_BOT))
+
+    # --- Send message after registering ---
     await client.send_message(EXTERNAL_BOT, song_name)
 
     try:
+        # Wait for menu first
         await asyncio.wait_for(menu_future, timeout=timeout_menu)
+        # Then wait for media
         media_msg = await asyncio.wait_for(media_future, timeout=timeout_media)
 
         filename = selected_filename or "Unknown.mp3"
@@ -56,8 +62,8 @@ async def query_external_bot_first(song_name: str, download_path: str, timeout_m
         return None
 
     finally:
+        # Remove the handler safely
         client.remove_event_handler(handler)
-
 
 # ----------------------------
 # Download by message ID
