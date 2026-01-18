@@ -24,7 +24,8 @@ async def query_external_bot_first(song_name: str, download_path: str, timeout=3
     """Send a query to the external bot and download the first audio received."""
 
     # debug
-    print("Client connected:", client.is_connected())
+    entity = await client.get_entity(EXTERNAL_BOT)
+    print(entity)
 
     media_future = asyncio.get_running_loop().create_future()
     selected_filename = None
