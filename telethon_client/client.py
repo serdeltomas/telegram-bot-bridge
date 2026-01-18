@@ -12,18 +12,10 @@ async def start_client():
 from telethon import events
 from datetime import datetime
 
-@client.on(events.NewMessage(chats=EXTERNAL_BOT))
-async def debug_fmus_messages(event):
-    m = event.message
+from telethon import events
+from bot.config import EXTERNAL_BOT
 
-    print("\n===== FMUS EVENT =====")
-    print("Time:", datetime.utcnow().isoformat())
-    print("ID:", m.id)
-    print("Date:", m.date)
-    print("Grouped ID:", m.grouped_id)
-    print("Out:", m.out)
-    print("Has audio:", bool(m.audio))
-    print("Has document:", bool(m.document))
-    print("Text:", repr(m.message))
-    print("Reply markup:", bool(m.reply_markup))
-    print("======================\n")
+@client.on(events.NewMessage(chats=EXTERNAL_BOT))
+async def debug_external_bot(event):
+    inspect_message(event.message)
+
