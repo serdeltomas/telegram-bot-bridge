@@ -40,6 +40,7 @@ async def menu_handler(event):
             print(f"⚡ Automatically clicking button: {first_row.buttons[0].text}")
             try:
                 # Use Telethon's click() method on the button
+                await asyncio.sleep(2)
                 await msg.click(0)  # 0 = first button in the row
                 print("✅ Button clicked successfully!")
             except Exception as e:
