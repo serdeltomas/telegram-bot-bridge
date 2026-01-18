@@ -1,29 +1,14 @@
-from telethon import TelegramClient
+from telethon import TelegramClient, events
 from bot.config import API_ID, API_HASH, EXTERNAL_BOT
 
 # Create Telethon client
 client = TelegramClient("user_session", API_ID, API_HASH)
 
 async def start_client():
-    # Starts the client, logs in if needed
-    await client.start()  # Will ask for phone + code on first run
+    await client.start()  # Logs in if needed
     print("✅ Telethon user client started")
 
-from telethon import events
-from datetime import datetime
-
-from telethon import events
-from bot.config import EXTERNAL_BOT
-
-@client.on(events.NewMessage(chats=EXTERNAL_BOT))
-async def debug_external_bot(event):
-    inspect_message(event.message)
-
-@client.on(events.NewMessage(chats=EXTERNAL_BOT))
-async def menu_handler(event):
-    m = event.message
-    debug_message_buttons(m)
-
+# Debug helper
 def debug_message_buttons(msg):
     print("===== DEBUG BOT MENU =====")
     print("Message ID:", msg.id)
@@ -42,3 +27,7 @@ def debug_message_buttons(msg):
         print("No reply markup.")
     print("===========================")
 
+# Handler for debugging menus from the external bot
+@client.on(events.NewMessage(chats=EXTERNAL_BOT))
+async def menu_handler(event):
+    debug_message_buttons(event.message)
