@@ -6,13 +6,19 @@ import re
 from telethon import events
 from telethon_client.client import client
 from bot.config import EXTERNAL_BOT
-
+from pathlib import Path
 
 def clean_filename(name: str) -> str:
-    """Clean string to be safe as a filename."""
-    name = re.sub(r'^\d+\.\s*', '', name)  # remove "1. " prefix
+    name = re.sub(r'^\d+\.\s*', '', name)
+
     name = re.sub(r'[\\/*?:"<>|]', "", name)
-    return name.strip()
+    name = name.strip()
+
+    p = Path(name)
+    if not p.suffix:
+        name += ".mp3"
+
+    return name
 
 async def query_external_bot_first(song_name: str, download_path: str, timeout=30):
     """Send a query to the external bot and download the first audio received."""
@@ -36,3 +42,4 @@ async def query_external_bot_first(song_name: str, download_path: str, timeout=3
         if (msg.audio or msg.document) and not media_future.done():
             media_future.set_result(msg)
 
+    client.add_event_handler(handler, events.NewMessage(chats=EXTERNAL_BOT))
