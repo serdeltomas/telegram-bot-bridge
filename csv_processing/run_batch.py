@@ -1,6 +1,6 @@
 import asyncio
 from telethon_client.client import start_client
-from telethon_client.batch import process_csv
+from csv_processing.batch import process_csv
 
 async def main():
     await start_client()
