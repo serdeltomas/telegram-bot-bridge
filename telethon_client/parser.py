@@ -13,8 +13,8 @@ def clean_filename(name: str) -> str:
     name = re.sub(r'[\\/*?:"<>|]', "", name)
     return name.strip()
 
-async def query_external_bot_first(song_name: str, download_path: str, timeout_menu=10, timeout_media=30):
-    menu_future = asyncio.get_running_loop().create_future()
+async def query_external_bot_first(song_name: str, download_path: str, timeout=30):
+    """Send a query to the external bot and download the first audio received."""
     media_future = asyncio.get_running_loop().create_future()
     selected_filename = None
 
@@ -22,7 +22,7 @@ async def query_external_bot_first(song_name: str, download_path: str, timeout_m
         nonlocal selected_filename
         msg = event.message
 
-        # --- Detect menu ---
+        # If this is a menu with buttons
         if msg.reply_markup:
             for row in msg.reply_markup.rows:
                 btn = row.buttons[0]
@@ -32,38 +32,33 @@ async def query_external_bot_first(song_name: str, download_path: str, timeout_m
                         await msg.click(0)
                     except Exception as e:
                         print("❌ Failed to click button:", e)
-                    # Only set the future if not done
-                    if not menu_future.done():
-                        menu_future.set_result(True)
 
-        # --- Detect media ---
+        # If this is audio or document
         if (msg.audio or msg.document) and not media_future.done():
             media_future.set_result(msg)
 
-    # --- Register handler ---
     client.add_event_handler(handler, events.NewMessage(chats=EXTERNAL_BOT))
 
-    # --- Send message after registering ---
+    # Send search query
     await client.send_message(EXTERNAL_BOT, song_name)
 
     try:
-        # Wait for menu first
-        await asyncio.wait_for(menu_future, timeout=timeout_menu)
-        # Then wait for media
-        media_msg = await asyncio.wait_for(media_future, timeout=timeout_media)
+        # Wait for the first media (audio/document)
+        media_msg = await asyncio.wait_for(media_future, timeout=timeout)
 
+        # Determine filename
         filename = selected_filename or "Unknown.mp3"
         await media_msg.download_media(file=f"{download_path}/{filename}")
         print(f">>> Downloaded: {filename}")
         return filename
 
     except asyncio.TimeoutError:
-        print(">>> Timeout waiting for menu or media")
+        print(">>> Timeout waiting for media")
         return None
 
     finally:
-        # Remove the handler safely
         client.remove_event_handler(handler)
+
 
 # ----------------------------
 # Download by message ID
