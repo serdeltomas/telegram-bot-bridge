@@ -104,13 +104,7 @@ async def query_external_bot_first(song_name: str, download_path: str):
 
         # Click the button
         print(">>> Clicking button", first_button.text)
-        await client(
-            functions.messages.GetBotCallbackAnswerRequest(
-                peer=EXTERNAL_BOT,
-                msg_id=menu_msg.id,
-                data=first_button.data
-            )
-        )
+        await menu_msg.click(0)
 
         # Wait for the media to arrive
         media_msg = await asyncio.wait_for(future_media, timeout=20)
