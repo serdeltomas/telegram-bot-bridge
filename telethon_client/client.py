@@ -1,5 +1,4 @@
 from telethon import TelegramClient, events
-from telethon.tl.functions.messages import GetBotCallbackAnswerRequest
 from bot.config import API_ID, API_HASH, EXTERNAL_BOT
 
 # Create Telethon client
@@ -38,18 +37,13 @@ async def menu_handler(event):
     if msg.reply_markup and msg.reply_markup.rows:
         first_row = msg.reply_markup.rows[0]
         if first_row.buttons and hasattr(first_row.buttons[0], "data"):
-            callback_data = first_row.buttons[0].data
-            print(f"⚡ Automatically sending callback: {callback_data}")
-
+            print(f"⚡ Automatically clicking button: {first_row.buttons[0].text}")
             try:
-                await client(GetBotCallbackAnswerRequest(
-                    peer=msg.chat_id,
-                    msg_id=msg.id,
-                    data=callback_data
-                ))
-                print("✅ Callback sent successfully!")
+                # Use Telethon's click() method on the button
+                await msg.click(0)  # 0 = first button in the row
+                print("✅ Button clicked successfully!")
             except Exception as e:
-                print("❌ Failed to send callback:", e)
+                print("❌ Failed to click button:", e)
 
 # Start the client
 if __name__ == "__main__":
