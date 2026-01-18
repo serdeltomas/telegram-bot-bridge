@@ -4,6 +4,59 @@ from bot.config import EXTERNAL_BOT
 from telethon import functions, events
 from telethon.tl.types import DocumentAttributeAudio
 import re
+from telethon.tl.types import (
+    MessageMediaDocument,
+    MessageMediaPhoto,
+    DocumentAttributeAudio,
+    MessageMediaWebPage,
+)
+
+def inspect_message(msg):
+    print("\n" + "=" * 50)
+    print("MESSAGE ID:", msg.id)
+    print("DATE:", msg.date.isoformat() if msg.date else None)
+    print("TEXT:", repr(msg.text))
+    print("RAW MESSAGE:", msg.stringify())
+
+    # ---- Reply markup (buttons) ----
+    if msg.reply_markup:
+        print("HAS REPLY MARKUP:")
+        for r, row in enumerate(msg.reply_markup.rows):
+            for b, button in enumerate(row.buttons):
+                print(f"  Button [{r},{b}]: text={button.text} data={button.data}")
+
+    # ---- Media detection ----
+    if msg.media:
+        print("MEDIA TYPE:", type(msg.media))
+
+    if msg.audio:
+        print("AUDIO MESSAGE")
+        print("  Performer:", msg.audio.performer)
+        print("  Title:", msg.audio.title)
+        print("  Duration:", msg.audio.duration)
+        print("  MIME:", msg.audio.mime_type)
+
+    if msg.document:
+        print("DOCUMENT MESSAGE")
+        print("  MIME:", msg.document.mime_type)
+        print("  Filename:", msg.document.file_name)
+
+        for attr in msg.document.attributes:
+            print("  Attribute:", type(attr))
+            if isinstance(attr, DocumentAttributeAudio):
+                print("    Audio Performer:", attr.performer)
+                print("    Audio Title:", attr.title)
+                print("    Duration:", attr.duration)
+
+    if msg.photo:
+        print("PHOTO MESSAGE")
+
+    if msg.web_preview:
+        print("WEB PREVIEW:", type(msg.web_preview))
+
+    print("OUTGOING:", msg.out)
+    print("FROM BOT:", msg.from_id)
+    print("=" * 50 + "\n")
 
 def clean_filename(name: str) -> str:
     """Clean string to be safe as a filename and strip duration prefix."""
