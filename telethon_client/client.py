@@ -27,6 +27,12 @@ def debug_message_buttons(msg):
         print("No reply markup.")
     print("===========================")
 
+# Handler for debugging menus from the external bot
+@client.on(events.NewMessage(chats=EXTERNAL_BOT))
+async def menu_handler(event):
+    msg = event.message
+    debug_message_buttons(msg)
+
 
 # Start the client
 if __name__ == "__main__":
