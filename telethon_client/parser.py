@@ -24,14 +24,12 @@ async def query_external_bot_first(song_name: str, download_path: str, timeout=3
 
         # If this is a menu with buttons
         if msg.reply_markup:
-            for row in msg.reply_markup.rows:
-                btn = row.buttons[0]
-                if hasattr(btn, "data") and btn.data.startswith(b"dl:"):
-                    selected_filename = clean_filename(btn.text)
-                    try:
-                        await msg.click(0)
-                    except Exception as e:
-                        print("❌ Failed to click button:", e)
+            first_row = msg.reply_markup.rows[0]
+            btn = first_row.buttons[0]
+            if hasattr(btn, "data") and btn.data.startswith(b"dl:"):
+                selected_filename = clean_filename(btn.text)
+                await asyncio.sleep(1.5)
+                await msg.click(0)
 
         # If this is audio or document
         if (msg.audio or msg.document) and not media_future.done():
