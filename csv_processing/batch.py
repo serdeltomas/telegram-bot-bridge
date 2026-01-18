@@ -1,5 +1,6 @@
 import csv
 import asyncio
+import random
 from telethon_client.parser import query_external_bot_first
 from bot.config import DOWNLOAD_PATH
 
