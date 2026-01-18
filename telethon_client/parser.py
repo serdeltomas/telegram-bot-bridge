@@ -22,6 +22,10 @@ def clean_filename(name: str) -> str:
 
 async def query_external_bot_first(song_name: str, download_path: str, timeout=30):
     """Send a query to the external bot and download the first audio received."""
+
+    # debug
+    print("Client connected:", client.is_connected())
+
     media_future = asyncio.get_running_loop().create_future()
     selected_filename = None
 
