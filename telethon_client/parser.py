@@ -22,7 +22,6 @@ def clean_filename(name: str) -> str:
 
 async def query_external_bot_first(song_name: str, download_path: str, timeout=30):
     """Send a query to the external bot and download the first audio received."""
-@@ -41,74 +36,3 @@
         if (msg.audio or msg.document) and not media_future.done():
             media_future.set_result(msg)
 
