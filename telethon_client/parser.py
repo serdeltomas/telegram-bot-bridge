@@ -23,8 +23,25 @@ def clean_filename(name: str) -> str:
 
 async def query_external_bot_first(song_name: str, download_path: str, timeout=30):
     """Send a query to the external bot and download the first audio received."""
-    if (msg.audio or msg.document) and not media_future.done():
-        media_future.set_result(msg)
+    media_future = asyncio.get_running_loop().create_future()
+    selected_filename = None
+
+    async def handler(event):
+        nonlocal selected_filename
+        msg = event.message
+
+        # If this is a menu with buttons
+        if msg.reply_markup:
+            first_row = msg.reply_markup.rows[0]
+            btn = first_row.buttons[0]
+            if hasattr(btn, "data") and btn.data.startswith(b"dl:"):
+                selected_filename = clean_filename(btn.text)
+                await asyncio.sleep(1.5)
+                await msg.click(0)
+
+        # If this is audio or document
+        if (msg.audio or msg.document) and not media_future.done():
+            media_future.set_result(msg)
 
     client.add_event_handler(handler, events.NewMessage(chats=EXTERNAL_BOT))
 
@@ -96,4 +113,3 @@ async def download_latest_file(filename: str, path: str):
         if msg.file:
             await msg.download_media(file=f"{path}/{filename}")
             return True
-    return False
