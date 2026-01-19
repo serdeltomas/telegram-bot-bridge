@@ -8,28 +8,6 @@ from telethon_client.client import client
 from bot.config import EXTERNAL_BOT
 from pathlib import Path
 
-import random
-from telethon.tl.functions.messages import StartBotRequest
-from telethon.tl.types import InputPeerUser
-
-_bot_started_cache = set()
-
-async def ensure_bot_started(client, bot_username: str):
-    if bot_username in _bot_started_cache:
-        return
-
-    bot = await client.get_entity(bot_username)
-
-    await client(StartBotRequest(
-        bot=bot,
-        peer=InputPeerUser(client._self_id, client._self_access_hash),
-        start_param="start",
-        random_id=random.randint(1, 2**63 - 1)
-    ))
-
-    _bot_started_cache.add(bot_username)
-
-
 def clean_filename(name: str) -> str:
     name = re.sub(r'^\d+\.\s*', '', name)
 
