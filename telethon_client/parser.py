@@ -5,6 +5,7 @@ import asyncio
 import re
 from telethon import events
 from telethon_client.client import client
+from telethon.tl.types import DocumentAttributeAudio
 from bot.config import EXTERNAL_BOT
 from pathlib import Path
 
@@ -22,8 +23,8 @@ def clean_filename(name: str) -> str:
 
 async def query_external_bot_first(song_name: str, download_path: str, timeout=30):
     """Send a query to the external bot and download the first audio received."""
-        if (msg.audio or msg.document) and not media_future.done():
-            media_future.set_result(msg)
+    if (msg.audio or msg.document) and not media_future.done():
+        media_future.set_result(msg)
 
     client.add_event_handler(handler, events.NewMessage(chats=EXTERNAL_BOT))
 
