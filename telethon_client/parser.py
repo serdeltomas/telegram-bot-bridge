@@ -9,17 +9,20 @@ from telethon.tl.types import DocumentAttributeAudio
 from bot.config import EXTERNAL_BOT
 from pathlib import Path
 
+AUDIO_EXTENSIONS = {".mp3", ".wav", ".flac", ".aac", ".ogg", ".m4a"}
+
 def clean_filename(name: str) -> str:
     name = re.sub(r'^\d+\.\s*', '', name)
-
     name = re.sub(r'[\\/*?:"<>|]', "", name)
     name = name.strip()
 
     p = Path(name)
-    if not p.suffix:
+
+    if p.suffix.lower() not in AUDIO_EXTENSIONS:
         name += ".mp3"
 
     return name
+
 
 async def query_external_bot_first(song_name: str, download_path: str, timeout=30):
     """Send a query to the external bot and download the first audio received."""
